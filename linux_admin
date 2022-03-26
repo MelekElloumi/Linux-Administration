@@ -1,0 +1,311 @@
+#!/bin/bash
+c=0
+while [ $c != 99 ]; do
+echo "**Administration de la machine**"
+echo "
+Donner le numéro du choix:
+1-Gestion des modules
+2-Gestion de l'arret et du démarrage
+3-Gestion des comptes et des groupes
+4-Gestion des processus
+99-Quitter"
+read c
+case $c in
+1)
+  echo "--Gestion des modules--
+Donner le numéro du choix:
+11-Lister les modules
+12-Effacer un module
+13-Insérer un module
+14-Afficher les infos d'un module
+15-Menu Principal
+99-Quitter"
+  read r
+  case $r in
+  11)
+    lsmod
+  ;;
+  12)
+      lsmod | cat -n
+     echo "Donner le numero de module à effacer"
+     read numserv
+     serv=`lsmod | cat -n | grep "$numserv" | cut -f2`
+    sudo rmmod $serv
+  ;;
+  13)
+    echo "Donner le module à ajouter"
+    read ch
+    sudo modprobe $ch
+  ;;
+  14)
+    echo "Donner le module"
+    read ch
+    sudo modinfo $ch
+  ;;
+  15)
+  echo "Retour au menu principal"
+  ;;
+  99)
+  echo "Au revoir"
+  c=99
+  ;;
+  *)
+  echo "Choix erronné"
+  ;;
+  esac
+;;
+2)
+  echo "--Gestion de l'arret et du démarrage--
+Donner le numéro du choix:
+21-Arreter la machine
+22-Afficher le niveau d'execution actuel
+23-Changer de niveau d'execution
+24-Afficher le niveau d'execution au démarrage par défaut
+25-Activer/Stopper un service au démarrage ou arret
+26-Afficher les messages du démarrage
+27-Afficher les applications du démarrage et arrêt du système
+28-Installer une application dans un niveau d'execution
+29-Menu Principal
+99-Quitter"
+  read p
+  case $p in
+  21)
+     init 0
+  ;;
+  22)
+     who -r
+  ;;
+  23)
+     echo "Donner le niveau cible:"
+     read r
+     init $r
+     echo "Niveau changé"
+  ;;
+  24)
+     cat /etc/inittab | grep ":initdefault:" | cut -d: -f2
+  ;;
+  25)
+    ls /etc/init.d | cat -n
+     echo "Donner le numero de service à activer/stopper"
+     read numserv
+     serv=`ls /etc/init.d | cat -n | grep "$numserv" | cut -f2`
+     echo "Vous voulez arreter ou lancer le service?
+1-Arreter
+2-Lancer"
+	read k
+	case $k in
+	1)
+	/etc/init.d/"$serv" stop
+	;;
+	2)
+	/etc/init.d/"$serv" start
+	;;
+	*)
+        echo "Choix erronné"
+	;;
+	esac
+  ;;
+  26)
+    dmesg
+  ;;
+  27)
+    ls /etc/init.d/*
+  ;;
+  28)
+    echo "Donner le nom de l'application"
+    read nom
+    echo "Donner le chemin de l'application sans son nom"
+    read file
+    sudo cp $file/$nom /etc/init.d/
+    echo "Dans quel niveau d'execution $nom va s'executer?"
+    read runlevel
+    cd /etc/rc$runlevel.d
+    sudo ln -s /etc/init.d/$nom /etc/rc$runlevel.d/K01$nom
+    echo "Installation faite"
+  ;;
+  29)
+  echo "Retour au menu principal"
+  ;;
+  99)
+  echo "Au revoir"
+  c=99
+  ;;
+  *)
+  echo "Choix erronné"
+  ;;
+  esac
+;;
+3)
+echo "--Gestion des comptes et des groupes--
+Donner le numéro du choix:
+31-Lister les comptes
+32-Lister les groupes
+33-Ajouter un compte
+34-Modifier le nom d'un compte
+35-Ajouter un groupe
+36-Modifier le nom d'un groupe
+37-Modifier le groupe d'un utilisateur
+38-Menu Principal
+99-Quitter"
+  read p
+  case $p in
+  31)
+    echo "Liste des comptes"
+    echo "Userid  |  Login"
+    IFS=":"
+    while read login pwd uid gid cm home shell
+    do
+    echo "$uid  |  $login"
+    done < /etc/passwd
+  ;;
+  32)
+    echo "Liste des groupes"
+    echo "Groupeid  |  Login"
+    IFS=":"
+    while read group pwd gid ab
+    do
+    echo "$gid  |  $group"
+    done < /etc/group
+  ;;
+  33)
+    echo "Donner le nom du nouveau compte"
+    read nom
+    sudo useradd $nom
+  ;;
+  34)
+    echo "Donner le login du compte que vous souhaitez modifier:"
+    read login
+    echo "Donner le nouveau nom du compte:"
+    read nl
+    sudo usermod -l $nl $login && echo "Nom du compte changé"
+  ;;
+  35)
+    echo "Donner le nom du nouveau groupe"
+    read nom
+    sudo groupadd $nom
+  ;;
+  36)
+    echo "Donner le nom du groupe que vous souhaitez modifier:"
+    read gp
+    echo "Donner son nouveau nom:"
+    read ng
+    sudo groupmod -n $ng $gp && echo "Nom du groupe changé"
+  ;;
+  37)
+    echo "Donner le login du compte que vous souhaitez modifier:"
+    read login  
+    echo "Donner le nouveau groupe du compte:"
+    read nlg
+    sudo usermod -g $nlg $login && echo "Groupe du compte changé"    
+  ;;
+  38)
+  echo "Retour au menu principal"
+  ;;
+  99)
+  echo "Au revoir"
+  c=99
+  ;;
+  *)
+  echo "Choix erronné"
+  ;;
+  esac
+;;
+4)
+echo "--Gestion des processus--
+Donner le numéro du choix:
+41-Lister les processus
+42-Tuer un processus
+43-Suspenre un processus
+44-Relancer un processus
+45-Lister les process d'un utilisateur
+46-Lister le pere d'un process
+47-Lister les parents d'un process
+48-Lister les fils directs d'un process
+49-tuer tous les process d'un utilisateur
+410-Menu Principal
+99-Quitter"
+  read p
+  case $p in
+  41)
+     ps -ef
+  ;;
+  42)
+	echo "Donner le processus "
+	read num
+	kill $num
+  ;;
+  43)
+	echo "Donner le processus "
+	read num
+	kill -20 $num
+  ;;
+  44)
+	echo "Donner le processus "
+	read num
+	kill -18 $num
+  ;;
+  45)
+	echo "Donner le nom de l'utilisateur: "
+	read nom
+	echo "PID  |  Command"
+	ps -ef | grep "$nom" | while read uid pid ppid c stime tty time cmd
+    	do
+    	if [ "$nom" == "$uid" ] ; then 
+   	 echo "$pid  |  $cmd"
+    	fi
+    	done 
+  ;;
+  46)
+  	echo "Donner le process "
+	read num
+	echo "UID  |  PID"
+	num=$(ps -ef  | egrep "^[^ ]* +$num +[^ ]* +.*" | tr -s ' ' | cut -d' ' -f3)
+	ps -ef  | egrep "^[^ ]* +$num +[^ ]* +.*" | tr -s ' ' | cut -d' ' -f1,2
+  ;;
+  47)
+	echo "Donner le process "
+	read num
+	echo "UID - PID"
+	while [ $num != 0 ]
+		do
+		ps -ef  | egrep "^[^ ]* +$num +[^ ]* +.*" | tr -s ' ' | cut -d' ' -f1,2
+		num=$(ps -ef  | egrep "^[^ ]* +$num +[^ ]* +.*" | tr -s ' ' | cut -d' ' -f3)
+	done
+  ;;
+  48)
+	echo "Donner le process "
+	read num
+	echo "UID  |  PPID  |  PID"
+	ps -ef  | while read uid pid ppid c stime tty time cmd
+	do
+	if [ "$num" == "$ppid" ] ; then 
+	echo "$ppid  |  $pid  |  $uid"
+	fi
+	done 
+  ;;
+  49)
+	echo "Donner le nom de l'utilisateur: "
+	read nom
+	killall -u $nom
+  ;;
+  410)
+  echo "Retour au menu principal"
+  ;;
+  99)
+  echo "Au revoir"
+  c=99
+  ;;
+  *)
+  echo "Choix erronné"
+  ;;
+  esac
+;;
+99)
+echo "Au revoir"
+;;
+*)
+echo "Choix erronné"
+;;
+esac
+echo "-------------------------------------"
+done
